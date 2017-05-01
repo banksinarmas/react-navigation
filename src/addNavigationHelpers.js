@@ -4,6 +4,8 @@
  * Helpers for navigation.
  */
 
+// Used @microwavesafe's solution from https://github.com/react-community/react-navigation/issues/271
+
 import type {
   NavigationAction,
   NavigationProp,
@@ -13,6 +15,7 @@ import type {
 import NavigationActions from './NavigationActions';
 
 export default function<S: *> (navigation: NavigationProp<S, NavigationAction>) {
+  let debounce = true, timer; // Add this.
   return {
     ...navigation,
     goBack: (key?: ?string): boolean => navigation.dispatch(NavigationActions.back({
@@ -21,12 +24,22 @@ export default function<S: *> (navigation: NavigationProp<S, NavigationAction>) 
     navigate: (
       routeName: string,
       params?: NavigationParams,
-      action?: NavigationAction): boolean =>
+      action?: NavigationAction): boolean => {
+        // And this conditional check.
+      if (debounce) {
+        clearTimeout(timer);
+        debounce = false;
         navigation.dispatch(NavigationActions.navigate({
           routeName,
           params,
           action,
-        })),
+        }));
+        timer = setTimeout(() => {
+          debounce = true;
+        }, 600);
+      }
+    },
+      // End check
     /**
      * For updating current route params. For example the nav bar title and
      * buttons are based on the route params.
